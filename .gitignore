@@ -1,0 +1,14 @@
+# Virtual environment — never belongs on GitHub
+venv/
+
+# Credentials / secrets — NEVER commit
+*.env
+secrets*
+devices.yaml
+
+# Python junk
+__pycache__/
+*.pyc
+
+# macOS junk
+.DS_Store
