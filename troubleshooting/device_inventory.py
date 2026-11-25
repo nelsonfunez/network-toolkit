@@ -59,10 +59,12 @@ def check_version(conn) -> bool:
     # Walk the output line by line, same as your eyes would on a terminal,
     # and grab the three facts we care about.
     for line in output.splitlines():
-        if "Cisco IOS XE Software, Version" in line:
-            # Line looks like: "Cisco IOS XE Software, Version 17.12.02"
-            # split on "Version", take what's after it, trim the spaces.
-            version = line.split("Version")[-1].strip()
+        if line.startswith("Cisco IOS") and "Version" in line:
+            # Matches both platforms:
+            #   Cat8k: "Cisco IOS XE Software, Version 17.12.02"
+            #   IOL:   "Cisco IOS Software [IOSXE], Linux Software ..., Version 17.18.2, RELEASE..."
+            # Take what's after "Version", then cut at the first comma to drop "RELEASE..." noise.
+            version = line.split("Version")[-1].strip().split(",")[0]
         elif "Processor board ID" in line:
             # Line looks like: "Processor board ID 9Z9OXRWZ50D"
             # split into words, the serial is the last word.
@@ -114,7 +116,11 @@ def check_interfaces(conn) -> bool:
 def main():
     # Step 1: pull the connection info for this device from devices.yaml.
     # (Same as opening your SecureCRT saved session — host, user, type.)
-    device = load_device("sandbox-cat8k")
+        # Pick the device from the command line, e.g.:  python device_inventory.py cml-r1
+    # sys.argv is the list of words you typed: [0] is the script name, [1] the first argument.
+    # If no argument was given, fall back to the sandbox — same idea as a default route.
+    device_name = sys.argv[1] if len(sys.argv) > 1 else "sandbox-cat8k"
+    device = load_device(device_name)
 
     # Step 2: ask for the password now, at runtime — it lives nowhere on disk.
     device["password"] = getpass("Device password: ")
